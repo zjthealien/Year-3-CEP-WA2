@@ -130,16 +130,18 @@ function mouseWheel(event) {
 //menu functions
 function setupBallMenu(){
   ballMenuExit = createButton('x');
-  ballMenuExit.size(width/45, width/45)
-  ballMenuExit.position(width-width/45, 0)
+  ballMenuExit.size(20, 20)
+  ballMenuExit.position(width-20, 0)
   ballMenuExit.style('background-color', 'red');
   ballMenuExit.style('color', 'black');
+  ballMenuExit.style('font-size', 5);
   menus.ballMenu = new Menu((width / 4) * 3, -10, width / 4 + 10, (height / 8) * 7 + 10, [ballMenuExit])
   menus.ballMenu.assignClose(ballMenuExit);
   menus.ballMenu.assignDisplay(displayBallMenu);
-  velocityInput = createInput()
+  velocityInput = createInput();
+  velocityInput.attribute('type', 'number');
   push()
-  textSize(width/40);
+  textSize(height/40);
   velocityInput.position(menus.ballMenu.x+10+textWidth('Edit Velocity: '), height/12+height/40*4);
   velocityInput.size(width/4-20-textWidth('Edit Velocity: '), height/40)
   pop();
@@ -163,7 +165,8 @@ function setupBallMenu(){
 //makes random names for bodies
 function randomName(length = random(4, 8)) {
   let name = "";
-  let vowels = ["a", "e", "i", "o", "u", "y"];
+  let vowels = ["a", "e", "i", "o", "u"];
+  let vowelWeights = [1, 1, 1, 1, 1, 0.3];
   let consonants = [
     "b",
     "c",
@@ -184,24 +187,45 @@ function randomName(length = random(4, 8)) {
     "v",
     "w",
     "x",
+    "y",
     "z",
   ];
-  let isVowel;
-  let r = random(0, 1);
-  if (r == 0) {
-    name += consonants[floor(random(0, consonants.length), 0)];
-    isVowel = false;
-  } else {
-    name += vowels[floor(random(0, vowels.length), 0)];
-    isVowel = true;
+  //assume first letter is not vowel
+  let isVowel = false;
+  // set first letter to be a random letter
+  let letters = vowels.concat(consonants);
+  name += letters[floor(random(0, letters.length))];
+  for (let i = 0; i < vowels.length; i++) {
+    if (name == vowels[i]){
+      //if first letter is vowel, set isVowel to true
+      isVowel = true;
+      break;
+    }
   }
   name = name.toUpperCase();
-  for (let i = 0; i < length - 1; i++) {
+  //find total weights of vowels
+  let totalVowelWeight = 0;
+  vowelWeights.forEach(vowelWeight => {
+    totalVowelWeight += vowelWeight
+  });   
+  //add y to the list of vowels here to prevent 2 'y's in the letters list
+  vowels.push('y');
+  //make the rest of the letters
+  for (let i = 0; i < length-1; i++) {
     if (isVowel == true) {
+      //randomly choose a consonant if previous letter is a vowel
       name += consonants[floor(random(0, consonants.length), 0)];
       isVowel = false;
     } else {
-      name += vowels[floor(random(0, vowels.length), 0)];
+      //use weighted randomness to choose a vowel
+      weightChosen = random(0, totalVowelWeight);
+      for (let i = 0; i < vowels.length; i++) {
+        weightChosen -= vowelWeights[i];
+        if (weightChosen < 0) {
+          name += vowels[i];
+          break;
+        }
+      }
       isVowel = true;
     }
   }
@@ -302,7 +326,7 @@ function displayUserInterface() {
   stroke(255);
   strokeWeight(1);
   rect(-10, (height / 8) * 7, width + 20, height / 8 + 10);
-  if (mouseIsPressed) {
+  if (mouseIsPressed && mouseButton == LEFT) {
     let ball = ballToMouse(10)
     selectedBall = ball ? ball : selectedBall;
     if (ball){
@@ -330,12 +354,12 @@ function displayBallMenu(ball) {
   let textLength = textWidth(ball.name);
   //the code still works here
   let size =
-    ((width / 4 - 20) / textLength > width / 20)
-      ? width / 20
-      : (width / 4 - 20) / textLength;
+    ((height / 4 - 20) / textLength > height / 20)
+      ? height / 20
+      : (height / 4 - 20) / textLength;
   textSize(size);
   text(ball.name, (width / 4) * 3 + 10, 10);
-  textSize(width / 40);
+  textSize(height / 40);
   text(
     "x: " + floor(ball.position.x),
     (width / 4) * 3 + 10,
