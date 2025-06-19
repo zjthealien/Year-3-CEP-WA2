@@ -1,6 +1,6 @@
 //declare variable dump
-const BALLNUMBER = 10;
-const BALLMASS = 100;
+const BALLNUMBER = 700;
+const BALLMASS = 10000;
 const INITIALVELOCITY = 100000;
 const GRAVITATIONAL_CONSTANT = 0.1;
 let SPIRAL_RADIUS_INCREMENT = 5; // Controls the spread of the spiral
@@ -15,7 +15,7 @@ let cameraOffset;
 let cameraFollow = "FREEMOVEMENT"; // two modes - 'FREEMOVEMENT', allows the player to move camera using wasd and 'CENTER OF GRAVITY', centers the screen on the center of gravity
 let centerOfGravity;
 let zoom = 0.7; //sets the scale of the coordinate system on the screen to create zoom in zoom out effect
-
+let paused = false;
 //menus object
 let menus = {};
 
@@ -28,17 +28,17 @@ function setup() {
   randomSeed(seed);
   print("Seed: " + seed);
   let canvas = createCanvas(windowWidth, windowHeight);
-  canvas.elt.oncontextmenu = () => false;
+  //canvas.elt.oncontextmenu = () => false;
   //
   setupBallMenu();
   
-  sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
-  sun.color = color(255, 204, 0); // Yellow color for the sun
-  balls.push(sun);
+  //sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
+  //sun.color = color(255, 204, 0); // Yellow color for the sun
+  //balls.push(sun);
   // Create balls in a spiral pattern
   for (let i = 0; i < BALLNUMBER; i++) {
     let angle = i;
-    let radius = i * random(1, 5) * SPIRAL_RADIUS_INCREMENT + sun.radius; // Radius increases as we go along the spiral
+    let radius = i * random(1, 5) * SPIRAL_RADIUS_INCREMENT; // Radius increases as we go along the spiral
     // Introduce small variation to the angle to add randomness
     let angleVariation = random(-1, 1);
     let adjustedAngle = angle + angleVariation;
@@ -46,16 +46,10 @@ function setup() {
     let x = radius * cos(adjustedAngle);
     let y = radius * sin(adjustedAngle);
     let newBall = new Ball(x, y, BALLMASS, randomName());
-    // Calculate the velocity for a circular orbit around the sun
-    let velocityAngle = adjustedAngle + HALF_PI; // Perpendicular to the radius for circular motion
-    let distanceToSun = dist(x, y, sun.position.x, sun.position.y);
+    let velocityAngle = adjustedAngle + HALF_PI; 
     let velocityMagnitude = sqrt(
-      (GRAVITATIONAL_CONSTANT * (SUNMASS + (BALLNUMBER * BALLMASS) / 2)) /
-        distanceToSun
-    ); // Circular orbit velocity formula
-    // Add a slight variation to the velocity magnitude to take into account other masses
+    (GRAVITATIONAL_CONSTANT *(BALLNUMBER * BALLMASS) / 2)/radius); 
     let velocity = p5.Vector.fromAngle(velocityAngle).mult(velocityMagnitude);
-    // Set prevPosition based on intended initial velocity
     newBall.prevPosition = p5.Vector.sub(newBall.position, velocity);
     balls.push(newBall);
   }
@@ -71,8 +65,10 @@ function draw() {
   if (mouseIsPressed && mouseY < (height / 8) * 7 && mouseButton == RIGHT) {
     spawnBallOnLocation(mouseToWorld());
   }
-  for (let times = 0; times < timeMultiplier; times++) {
-    physicsUpdate();
+  if (!paused){
+    for (let times = 0; times < timeMultiplier; times++) {
+      physicsUpdate();
+    }
   }
   setCameraSettings();
   findCenterOfGravity();
@@ -82,6 +78,7 @@ function draw() {
   for (let ball of balls) {
     ball.display();
   }
+  displayVectors(balls);
   displayCenterOfMassMarker();
   resetMatrix();
   displayUserInterface();
@@ -111,7 +108,11 @@ function keyPressed() {
    // timeMultiplier = (Number(key) * 3) ** 2;
   }
   if (keyCode == 32) {
-    timeMultiplier = 0;
+    if (paused){
+      paused = false;
+    }else{
+      paused = true;
+    }
   }
 }
 
