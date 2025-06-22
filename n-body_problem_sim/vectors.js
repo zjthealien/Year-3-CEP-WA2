@@ -32,7 +32,7 @@ function arrow(x1, y1, x2, y2, colour){
   //display arrow
   push();
   c = color(colour);
-  print(c)
+  //print(c)
   c.setAlpha(100);
   strokeWeight(0);
   stroke(c)

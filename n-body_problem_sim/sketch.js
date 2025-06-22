@@ -1,5 +1,5 @@
 //declare variable dump
-const BALLNUMBER = 700;
+const BALLNUMBER = 400;
 const BALLMASS = 10000;
 const INITIALVELOCITY = 100000;
 const GRAVITATIONAL_CONSTANT = 0.1;
@@ -18,20 +18,23 @@ let zoom = 0.7; //sets the scale of the coordinate system on the screen to creat
 let paused = false;
 //menus object
 let menus = {};
-
+let seed;
 //for the ball menu at the side
 let selectedBall;
+let selectedMenu;
 
-function setup() {
-  let seed = 1;
+function setup() {  
+  seed = 1;
   //make the randomness based on the seed number
   randomSeed(seed);
   print("Seed: " + seed);
   let canvas = createCanvas(windowWidth, windowHeight);
-  //canvas.elt.oncontextmenu = () => false;
+  //prevents context menu from appearing when right clicking (doesnt interfere with creating balls)
+  canvas.elt.oncontextmenu = () => false;
   //
   setupBallMenu();
-  
+  menus.gameMenu = new Menu (0, 0, width, height, [], 1);
+  menus.gameMenu.open = true;
   //sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
   //sun.color = color(255, 204, 0); // Yellow color for the sun
   //balls.push(sun);
@@ -62,7 +65,7 @@ function setup() {
 function draw() {
   background(0);
   //print(zoom);
-  if (mouseIsPressed && mouseY < (height / 8) * 7 && mouseButton == RIGHT) {
+  if (mouseIsPressed && mouseY < (height / 8) * 7 && mouseButton == RIGHT&&selectedMenu == menus.gameMenu) {
     spawnBallOnLocation(mouseToWorld());
   }
   if (!paused){
@@ -81,7 +84,10 @@ function draw() {
   displayVectors(balls);
   displayCenterOfMassMarker();
   resetMatrix();
+  manageButtonPresses()
   displayUserInterface();
+  //console.log(menus.ballMenu.open);
+  console.log(selectedMenu)
 }
 
 function keyPressed() {
@@ -128,111 +134,8 @@ function mouseWheel(event) {
   cameraOffset.add(newMouseWorld.sub(mouseWorld));
 }
 
-//menu functions
-function setupBallMenu(){
-  ballMenuExit = createButton('x');
-  ballMenuExit.size(20, 20)
-  ballMenuExit.position(width-20, 0)
-  ballMenuExit.style('background-color', 'red');
-  ballMenuExit.style('color', 'black');
-  ballMenuExit.style('font-size', 5);
-  menus.ballMenu = new Menu((width / 4) * 3, -10, width / 4 + 10, (height / 8) * 7 + 10, [ballMenuExit])
-  menus.ballMenu.assignClose(ballMenuExit);
-  menus.ballMenu.assignDisplay(displayBallMenu);
-  velocityInput = createInput();
-  velocityInput.attribute('type', 'number');
-  push()
-  textSize(height/40);
-  velocityInput.position(menus.ballMenu.x+10+textWidth('Edit Velocity: '), height/12+height/40*4);
-  velocityInput.size(width/4-20-textWidth('Edit Velocity: '), height/40)
-  pop();
-  velocityInput.elt.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    let speed = float(velocityInput.value()); // Get input as a float
-
-    // Compute direction vector
-    let velocity = p5.Vector.sub(selectedBall.position, selectedBall.prevPosition);
-
-    // Set magnitude to user input
-    velocity.setMag(speed);
-
-    // Update previous position based on new velocity
-    selectedBall.prevPosition = p5.Vector.sub(selectedBall.position, velocity);
-  }
-});
-  menus.ballMenu.buttons.push(velocityInput);
-}
-
+//custom functions
 //makes random names for bodies
-function randomName(length = random(4, 8)) {
-  let name = "";
-  let vowels = ["a", "e", "i", "o", "u"];
-  let vowelWeights = [1, 1, 1, 1, 1, 0.3];
-  let consonants = [
-    "b",
-    "c",
-    "d",
-    "f",
-    "g",
-    "h",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-  ];
-  //assume first letter is not vowel
-  let isVowel = false;
-  // set first letter to be a random letter
-  let letters = vowels.concat(consonants);
-  name += letters[floor(random(0, letters.length))];
-  for (let i = 0; i < vowels.length; i++) {
-    if (name == vowels[i]){
-      //if first letter is vowel, set isVowel to true
-      isVowel = true;
-      break;
-    }
-  }
-  name = name.toUpperCase();
-  //find total weights of vowels
-  let totalVowelWeight = 0;
-  vowelWeights.forEach(vowelWeight => {
-    totalVowelWeight += vowelWeight
-  });   
-  //add y to the list of vowels here to prevent 2 'y's in the letters list
-  vowels.push('y');
-  //make the rest of the letters
-  for (let i = 0; i < length-1; i++) {
-    if (isVowel == true) {
-      //randomly choose a consonant if previous letter is a vowel
-      name += consonants[floor(random(0, consonants.length), 0)];
-      isVowel = false;
-    } else {
-      //use weighted randomness to choose a vowel
-      weightChosen = random(0, totalVowelWeight);
-      for (let i = 0; i < vowels.length; i++) {
-        weightChosen -= vowelWeights[i];
-        if (weightChosen < 0) {
-          name += vowels[i];
-          break;
-        }
-      }
-      isVowel = true;
-    }
-  }
-  return name;
-}
-
 function spawnBallOnLocation(position) {
   let newBall = new Ball(position.x, position.y, BALLMASS, randomName());
   let velocity = createVector(0, INITIALVELOCITY);
@@ -327,7 +230,7 @@ function displayUserInterface() {
   stroke(255);
   strokeWeight(1);
   rect(-10, (height / 8) * 7, width + 20, height / 8 + 10);
-  if (mouseIsPressed && mouseButton == LEFT) {
+  if (mouseIsPressed && mouseButton == LEFT && selectedMenu == menus.gameMenu) {
     let ball = ballToMouse(10)
     selectedBall = ball ? ball : selectedBall;
     if (ball){
@@ -339,51 +242,32 @@ function displayUserInterface() {
   } else{
     menus.ballMenu.attemptClose();
   }
-  if (menus.ballMenu.open){
-    menus.ballMenu.display(selectedBall);
+  let menuItems = []
+  for (let i in menus){
+    let menu = menus[i];
+    menuItems.push(menu)
   }
-  pop();
-}
-
-function displayBallMenu(ball) {
-  push();
-  rect((width / 4) * 3, -10, width / 4 + 10, (height / 8) * 7 + 10);
-  textAlign(LEFT, TOP);
-  fill(200);
-  strokeWeight(0);
-  textSize(1);
-  let textLength = textWidth(ball.name);
-  //the code still works here
-  let size =
-    ((height / 4 - 20) / textLength > height / 20)
-      ? height / 20
-      : (height / 4 - 20) / textLength;
-  textSize(size);
-  text(ball.name, (width / 4) * 3 + 10, 10);
-  textSize(height / 40);
-  text(
-    "x: " + floor(ball.position.x),
-    (width / 4) * 3 + 10,
-    height / 12 + height / 40
-  );
-  text(
-    "x: " + floor(ball.position.y),
-    (width / 4) * 3 + 10,
-    height / 12 + (height / 40) * 2
-  );
-  text(
-    "Velocity: " +
-      round(ball.position.copy().sub(ball.prevPosition.copy()).mag(), 3),
-    (width / 4) * 3 + 10,
-    height / 12 + (height / 40) * 3
-  );
-  text(
-    "Edit Velocity: ",
-    width/4*3+10,
-    height/12+height/40*4
-    );
-  text("Mass: " + ball.mass, (width / 4) * 3 + 10, height / 12);
-
+  for (let i = 0; i < menuItems.length; i++){
+    let menu = menuItems[i] 
+    //print(menu)
+    let lowestPriority = 1000;
+    let displayMenu;
+    for (let f = 0; f < menuItems.length; f++){
+      if (menu.priority <= lowestPriority){
+        lowestPriority = menu.priority;
+        displayMenu = menu;
+      }
+    }
+    if (menu.display){
+      menu.display()
+    }
+    for (let g = 0; g < menu.buttons.length; g++){
+      let button = menu.buttons[g];
+      if (button instanceof Button){
+        button.display();
+      }
+    }
+  }
   pop();
 }
 
@@ -424,4 +308,95 @@ function findCenterOfGravity() {
   }
   centerOfGravity.x = totalXOfBalls / totalBALLMASS;
   centerOfGravity.y = totalYOfBalls / totalBALLMASS;
+}
+
+function randomName(length = random(4, 8)) {
+  let name = "";
+  let vowels = ["a", "e", "i", "o", "u"];
+  let vowelWeights = [1, 1, 1, 1, 1, 0.3];
+  let consonants = [
+    "b",
+    "c",
+    "d",
+    "f",
+    "g",
+    "h",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+  ];
+  //assume first letter is not vowel
+  let isVowel = false;
+  // set first letter to be a random letter
+  let letters = vowels.concat(consonants);
+  name += letters[floor(random(0, letters.length))];
+  for (let i = 0; i < vowels.length; i++) {
+    if (name == vowels[i]){
+      //if first letter is vowel, set isVowel to true
+      isVowel = true;
+      break;
+    }
+  }
+  name = name.toUpperCase();
+  //find total weights of vowels
+  let totalVowelWeight = 0;
+  vowelWeights.forEach(vowelWeight => {
+    totalVowelWeight += vowelWeight
+  });   
+  //add y to the list of vowels here to prevent 2 'y's in the letters list
+  vowels.push('y');
+  //make the rest of the letters
+  for (let i = 0; i < length-1; i++) {
+    if (isVowel == true) {
+      //randomly choose a consonant if previous letter is a vowel
+      name += consonants[floor(random(0, consonants.length), 0)];
+      isVowel = false;
+    } else {
+      //use weighted randomness to choose a vowel
+      weightChosen = random(0, totalVowelWeight);
+      for (let i = 0; i < vowels.length; i++) {
+        weightChosen -= vowelWeights[i];
+        if (weightChosen < 0) {
+          name += vowels[i];
+          break;
+        }
+      }
+      isVowel = true;
+    }
+  }
+  return name;
+}
+function manageButtonPresses(){
+  let hoveredMenu = null;
+  let highestPriority = -Infinity;
+  for (let i in menus){
+    let menu = menus[i];
+    console.log(menu.contains(mouseX, mouseY))
+    if (menu.contains(mouseX, mouseY) && menu.open == true){
+      if (menu.priority > highestPriority){
+        highestPriority = menu.priority;
+        hoveredMenu = menu;
+      }
+    }
+  }
+  selectedMenu = hoveredMenu;
+  if (selectedMenu){
+    for (let button of selectedMenu.buttons){
+      if (button instanceof Button){
+        button.clicked();
+      }
+    }
+  }
 }
