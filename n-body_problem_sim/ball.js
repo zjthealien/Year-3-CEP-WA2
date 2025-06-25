@@ -31,7 +31,7 @@ class Ball{
   checkEdges(){
   }
   
-  display() {
+  ballDisplay() {
     this.radius = constrain(sqrt(this.mass/PI), 0, 100000);
     fill(this.color);
     stroke(0);
@@ -43,6 +43,8 @@ class Ball{
           ellipse(this.position.x, this.position.y, this.radius * 2);
 
     }
+  }
+  trailDisplay(){
     for (let i = 0; i < this.trail.length-1; i++){
       stroke(this.color)
       strokeWeight(0.5/zoom);

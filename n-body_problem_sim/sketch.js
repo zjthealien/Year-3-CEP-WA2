@@ -79,7 +79,10 @@ function draw() {
   scale(zoom);
   translate(cameraOffset.x, cameraOffset.y);
   for (let ball of balls) {
-    ball.display();
+    ball.ballDisplay();
+  }
+  for (let ball of balls){
+    ball.trailDisplay();
   }
   displayVectors(balls);
   displayCenterOfMassMarker();
