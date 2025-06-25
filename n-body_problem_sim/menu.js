@@ -10,7 +10,7 @@ class Menu{
   }
   attemptOpen(){
     console.log('attempt open')
-    print(this.open)
+    //print(this.open)
     if (this.open == false){
       this.open = true;
     }

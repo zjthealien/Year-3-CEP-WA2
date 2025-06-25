@@ -87,7 +87,7 @@ function draw() {
   manageButtonPresses()
   displayUserInterface();
   //console.log(menus.ballMenu.open);
-  console.log(selectedMenu)
+  //console.log(selectedMenu)
 }
 
 function keyPressed() {
@@ -383,7 +383,7 @@ function manageButtonPresses(){
   let highestPriority = -Infinity;
   for (let i in menus){
     let menu = menus[i];
-    console.log(menu.contains(mouseX, mouseY))
+    //console.log(menu.contains(mouseX, mouseY))
     if (menu.contains(mouseX, mouseY) && menu.open == true){
       if (menu.priority > highestPriority){
         highestPriority = menu.priority;

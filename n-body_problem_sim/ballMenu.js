@@ -75,7 +75,7 @@ function displayBallMenu() {
 }
 
 function ballMenuExitDisplay(){
-  print('hi');
+  //print('hi');
   push();
   stroke(255, 0, 0);
   strokeWeight(5);

@@ -1,3 +1,5 @@
+const ACCELERATION_SCALE = 10000;
+
 let setting = {};
 setting.showVector = true;
 
@@ -18,7 +20,7 @@ function arrow(x1, y1, x2, y2, colour){
   //find coordinates of right corner of arrowhead in relation to base of arrow Vector
   let arrowHeadRight = arrowVector.copy();
   //rotate 90 degrees to the right
-  arrowHeadRight.setHeading(lineVector.heading()+PI/2);
+  arrowHeadRight.setHeading(arrowVector.heading()+PI/2);
   arrowHeadRight.setMag(arrowSize/2);
   //find coordinates of left corner of arrowhead by using negative of right corner of arrowhead
   let arrowHeadLeft = arrowHeadRight.copy().mult(-1);
@@ -29,17 +31,37 @@ function arrow(x1, y1, x2, y2, colour){
   arrowHeadRight.add(arrowHeadBase);
   arrowHeadLeft.add(arrowHeadBase);
   arrowHeadMiddle.add(arrowHeadBase);
+
+  //make coords for rectangular section
+  //top left corner of rectangle, from pov of base of arrow to arrowhead
+  let topLeftCorner = arrowVector.copy();
+  topLeftCorner.setMag(arrowVector.mag()/12);
+  topLeftCorner.setHeading(arrowVector.heading()+PI/2);
+  let topRightCorner = topLeftCorner.copy().mult(-1);
+  let bottomLeftCorner = topLeftCorner.copy();
+  let bottomRightCorner = topRightCorner.copy();
+  //shift vector positions to arrow's position
+  //move top face of rectangle section to be beside base of arrowhead
+  
+  topLeftCorner.add(arrowHeadBase);
+  topRightCorner.add(arrowHeadBase);
+  //move bottom face of rectangle section to base of arrow
+  bottomLeftCorner.add(arrowPosition);
+  bottomRightCorner.add(arrowPosition);
+
   //display arrow
   push();
-  c = color(colour);
+  let c = color(colour);
   //print(c)
   c.setAlpha(100);
   strokeWeight(0);
   stroke(c)
   fill(c)
+  //make triangular arrowhead
   triangle(arrowHeadRight.x, arrowHeadRight.y, arrowHeadMiddle.x, arrowHeadMiddle.y, arrowHeadLeft.x, arrowHeadLeft.y);
-  strokeWeight(arrowSize/2)
-  line(arrowPosition.x, arrowPosition.y, arrowHeadBase.x, arrowHeadBase.y)
+  noStroke();
+  //make rectangle section
+  quad(topLeftCorner.x, topLeftCorner.y, topRightCorner.x, topRightCorner.y, bottomRightCorner.x, bottomRightCorner.y, bottomLeftCorner.x, bottomLeftCorner.y)
   pop();
 }
 function displayVectors(array){
@@ -47,11 +69,11 @@ function displayVectors(array){
     for (let i = 0; i < array.length; i++){
       let ball = array[i];
       let velocity = ball.position.copy()
-      .sub(ball.prevPosition).mult(10).add(ball.position);
+            .sub(ball.prevPosition).mult(10).add(ball.position);
       arrow(ball.position.x, ball.position.y, velocity.x, velocity.y, 'green');
       let acceleration = ball.acceleration.copy().mult(10000);
       acceleration.add(ball.position)
-    arrow(ball.position.x, ball.position.y, acceleration.x, acceleration.y, 'red')
-  }
+      arrow(ball.position.x, ball.position.y, acceleration.x, acceleration.y, 'red')
+    }
   }
 }
