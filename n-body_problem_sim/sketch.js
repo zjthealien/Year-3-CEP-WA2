@@ -1,9 +1,9 @@
 //declare variable dump
-const BALLNUMBER = 400;
-const BALLMASS = 10000;
+const BALLNUMBER = 300;
+const BALLMASS = 200;
 const INITIALVELOCITY = 100000;
 const GRAVITATIONAL_CONSTANT = 0.1;
-let SPIRAL_RADIUS_INCREMENT = 5; // Controls the spread of the spiral
+let SPIRAL_RADIUS_INCREMENT = 1; // Controls the spread of the spiral
 let SUNMASS = 1000000;
 
 let timeMultiplier = 1;
@@ -15,16 +15,17 @@ let cameraOffset;
 let cameraFollow = "FREEMOVEMENT"; // two modes - 'FREEMOVEMENT', allows the player to move camera using wasd and 'CENTER OF GRAVITY', centers the screen on the center of gravity
 let centerOfGravity;
 let zoom = 0.7; //sets the scale of the coordinate system on the screen to create zoom in zoom out effect
-let paused = false;
+let paused = true;
 //menus object
 let menus = {};
 let seed;
 //for the ball menu at the side
 let selectedBall;
 let selectedMenu;
+let verticalTranslate;
 
 function setup() {  
-  seed = 1;
+  seed = round(random(1,1000));
   //make the randomness based on the seed number
   randomSeed(seed);
   print("Seed: " + seed);
@@ -35,31 +36,48 @@ function setup() {
   setupBallMenu();
   menus.gameMenu = new Menu (0, 0, width, height, [], 1);
   menus.gameMenu.open = true;
-  //sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
-  //sun.color = color(255, 204, 0); // Yellow color for the sun
-  //balls.push(sun);
+  setupBarMenu();
+  sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
+  sun.color = color(255, 204, 0); // Yellow color for the sun
+  balls.push(sun);
   // Create balls in a spiral pattern
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let minX = Infinity;
+  let minY = Infinity;
   for (let i = 0; i < BALLNUMBER; i++) {
     let angle = i;
-    let radius = i * random(1, 5) * SPIRAL_RADIUS_INCREMENT; // Radius increases as we go along the spiral
+    let radius = i * random(1, 5) * SPIRAL_RADIUS_INCREMENT + 1500; // Radius increases as we go along the spiral
     // Introduce small variation to the angle to add randomness
     let angleVariation = random(-1, 1);
     let adjustedAngle = angle + angleVariation;
     // Calculate the ball's position using polar coordinates
     let x = radius * cos(adjustedAngle);
     let y = radius * sin(adjustedAngle);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
     let newBall = new Ball(x, y, BALLMASS, randomName());
     let velocityAngle = adjustedAngle + HALF_PI; 
     let velocityMagnitude = sqrt(
-    (GRAVITATIONAL_CONSTANT *(BALLNUMBER * BALLMASS) / 2)/radius); 
+    (GRAVITATIONAL_CONSTANT *((SUNMASS) + (BALLNUMBER * BALLMASS / 2))/radius)*timeScale*random(0.6,1.4)); 
     let velocity = p5.Vector.fromAngle(velocityAngle).mult(velocityMagnitude);
     newBall.prevPosition = p5.Vector.sub(newBall.position, velocity);
     balls.push(newBall);
   }
   centerOfGravity = createVector(0, 0);
   findCenterOfGravity();
-  cameraOffset = createVector(-centerOfGravity.x, -centerOfGravity.y);
-  zoom = 0.16;
+  let dataWidth = maxX - minX;
+  let dataHeight = maxY - minY;
+  let padding = 10;
+  let availableWidth = width - 2 * padding;
+  let availableHeight = height/8*7 - 2 * padding;
+  let centerX = (minX + maxX) / 2;
+  let centerY = (minY + maxY) / 2;
+  zoom = Math.min(availableWidth / dataWidth, availableHeight / dataHeight);
+  cameraOffset = createVector(-centerX, -centerY);
+  verticalTranslate = height/8*7/2;
 }
 
 function draw() {
@@ -75,30 +93,58 @@ function draw() {
   }
   setCameraSettings();
   findCenterOfGravity();
-  translate(width / 2, height / 2);
+  translate(width / 2, verticalTranslate);
   scale(zoom);
   translate(cameraOffset.x, cameraOffset.y);
-  for (let ball of balls) {
-    ball.ballDisplay();
-  }
   for (let ball of balls){
     ball.trailDisplay();
+  }
+  for (let ball of balls) {
+    ball.ballDisplay();
+    
   }
   displayVectors(balls);
   displayCenterOfMassMarker();
   resetMatrix();
-  manageButtonPresses()
+  findSelectedMenu()
   displayUserInterface();
   //console.log(menus.ballMenu.open);
   //console.log(selectedMenu)
 }
 
+function mousePressed(){
+  for (let button of selectedMenu.buttons){
+    if (button instanceof Button){
+      if (button.clicked){
+        button.clicked();
+      }
+    }
+  }
+  if (mouseButton == LEFT && selectedMenu == menus.gameMenu) {
+    let ball = ballToMouse(10)
+    selectedBall = ball ? ball : selectedBall;
+    if (ball){
+      menus.ballMenu.attemptOpen();
+    }
+  }
+}
+
 function keyPressed() {
-  if (keyCode == 67) {
-    if (cameraFollow === "CENTEROFGRAVITY") {
+  if (keyCode == 67&&document.activeElement.tagName != 'INPUT') {
+    print('hi')
+    if (cameraFollow === "FREEMOVEMENT") {
+      if (cameraFollowBall.followingBall == false&&menus.ballMenu.open == true){
+        print('ho')
+        cameraFollowBall.followingBall=true
+      }else if (menus.ballMenu.open == false){
+        print('hee')
+        cameraFollow = "CENTEROFGRAVITY";
+      }
+  console.log(cameraFollow) 
+    } else{
+      print('oh')
       cameraFollow = "FREEMOVEMENT";
-    } else if (cameraFollow === "FREEMOVEMENT") {
-      cameraFollow = "CENTEROFGRAVITY";
+      cameraFollowBall.followingBall = false
     }
   }
 
@@ -116,7 +162,7 @@ function keyPressed() {
   ) {
    // timeMultiplier = (Number(key) * 3) ** 2;
   }
-  if (keyCode == 32) {
+  if (keyCode == 32&&document.activeElement.tagName != 'INPUT') {
     if (paused){
       paused = false;
     }else{
@@ -126,11 +172,13 @@ function keyPressed() {
 }
 
 function mouseWheel(event) {
+  console.log(zoom)
   let baseFactor = keyIsDown(16) ? 0.001 : 0.0001;
   // Get mouse position in world space BEFORE zoom change
   let mouseWorld = mouseToWorld();
   // Apply exponential flattening zoom
   zoom *= Math.exp(-event.delta * baseFactor);
+  zoom = constrain(zoom, -Infinity, 100000)
   // Get mouse position in world space AFTER zoom change
   let newMouseWorld = mouseToWorld();
   // Offset camera so zoom centers on mouse
@@ -163,7 +211,7 @@ function physicsUpdate() {
             other.mass += ball.mass;
             balls.splice(j, 1);
             if (selectedBall == ball) {
-              selectedBall = undefined;
+              selectedBall = other;
             }
             j--;
             break;
@@ -172,7 +220,7 @@ function physicsUpdate() {
             ball.mass += other.mass;
             balls.splice(i, 1);
             if (selectedBall == other) {
-              selectedBall = undefined;
+              selectedBall = ball;
             }
             i--;
           }
@@ -186,25 +234,25 @@ function physicsUpdate() {
 
 function setCameraSettings() {
   if (cameraFollow === "FREEMOVEMENT") {
-    if (keyIsPressed && keyIsDown(87)) {
+    if (keyIsPressed && keyIsDown(87)&&document.activeElement.tagName != 'INPUT') {
       if (keyIsDown(16)) {
         cameraOffset.y += 50 / zoom;
       }
       cameraOffset.y += 10 / zoom;
     }
-    if (keyIsPressed && keyIsDown(83)) {
+    if (keyIsPressed && keyIsDown(83)&&document.activeElement.tagName != 'INPUT') {
       if (keyIsDown(16)) {
         cameraOffset.y -= 50 / zoom;
       }
       cameraOffset.y -= 10 / zoom;
     }
-    if (keyIsPressed && keyIsDown(65)) {
+    if (keyIsPressed && keyIsDown(65)&&document.activeElement.tagName != 'INPUT') {
       if (keyIsDown(16)) {
         cameraOffset.x += 50 / zoom;
       }
       cameraOffset.x += 10 / zoom;
     }
-    if (keyIsPressed && keyIsDown(68)) {
+    if (keyIsPressed && keyIsDown(68)&&document.activeElement.tagName != 'INPUT') {
       if (keyIsDown(16)) {
         cameraOffset.x -= 50 / zoom;
       }
@@ -215,6 +263,15 @@ function setCameraSettings() {
     cameraOffset.x = -centerOfGravity.x;
     cameraOffset.y = -centerOfGravity.y;
   }
+  if (cameraFollowBall.followingBall){
+    cameraFollow = balls[balls.indexOf(selectedBall)]
+  }
+  if (cameraFollow instanceof Ball){
+    cameraOffset.x = -cameraFollow.position.x;
+    cameraOffset.y = -cameraFollow.position.y;
+  }
+  //console.log(cameraFollow)
+
 }
 
 function displayCenterOfMassMarker() {
@@ -232,13 +289,10 @@ function displayUserInterface() {
   fill(30);
   stroke(255);
   strokeWeight(1);
-  rect(-10, (height / 8) * 7, width + 20, height / 8 + 10);
-  if (mouseIsPressed && mouseButton == LEFT && selectedMenu == menus.gameMenu) {
-    let ball = ballToMouse(10)
-    selectedBall = ball ? ball : selectedBall;
-    if (ball){
-      menus.ballMenu.attemptOpen();
-    }
+  if (menus.barMenu.open){
+    verticalTranslate = height/8*7/2
+  } else if (menus.barMenu.open == false){
+    verticalTranslate = height/2
   }
   if (selectedBall){
     
@@ -259,15 +313,20 @@ function displayUserInterface() {
       if (menu.priority <= lowestPriority){
         lowestPriority = menu.priority;
         displayMenu = menu;
-      }
+      } 
     }
-    if (menu.display){
-      menu.display()
+    if (displayMenu.display){
+      displayMenu.display()
     }
     for (let g = 0; g < menu.buttons.length; g++){
       let button = menu.buttons[g];
       if (button instanceof Button){
-        button.display();
+        if (button.display){
+          button.display();
+        }
+        if (button.action){
+          button.action();
+        }
       }
     }
   }
@@ -276,7 +335,7 @@ function displayUserInterface() {
 
 function screenToWorld(vector) {
   return vector
-    .sub(width / 2, height / 2)
+    .sub(width / 2, verticalTranslate)
     .div(zoom)
     .sub(cameraOffset);
 }
@@ -291,7 +350,7 @@ function ballToMouse(buffer) {
       .copy()
       .add(cameraOffset)
       .mult(zoom)
-      .add(width / 2, height / 2);
+      .add(width / 2, verticalTranslate);
     let screenRadius = ball.radius * zoom;
     let interactionDistance = screenRadius < buffer ? buffer : screenRadius;
     if (p5.Vector.dist(mouse, screenPosition) < interactionDistance) {
@@ -317,29 +376,7 @@ function randomName(length = random(4, 8)) {
   let name = "";
   let vowels = ["a", "e", "i", "o", "u"];
   let vowelWeights = [1, 1, 1, 1, 1, 0.3];
-  let consonants = [
-    "b",
-    "c",
-    "d",
-    "f",
-    "g",
-    "h",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-  ];
+  let consonants = ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z"];
   //assume first letter is not vowel
   let isVowel = false;
   // set first letter to be a random letter
@@ -381,7 +418,7 @@ function randomName(length = random(4, 8)) {
   }
   return name;
 }
-function manageButtonPresses(){
+function findSelectedMenu(){
   let hoveredMenu = null;
   let highestPriority = -Infinity;
   for (let i in menus){
@@ -395,11 +432,4 @@ function manageButtonPresses(){
     }
   }
   selectedMenu = hoveredMenu;
-  if (selectedMenu){
-    for (let button of selectedMenu.buttons){
-      if (button instanceof Button){
-        button.clicked();
-      }
-    }
-  }
 }

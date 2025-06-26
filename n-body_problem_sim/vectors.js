@@ -1,18 +1,21 @@
-const ACCELERATION_SCALE = 10000;
+const ACCELERATION_SCALE = 250 ;
 
 let setting = {};
 setting.showVector = true;
 
 
-function arrow(x1, y1, x2, y2, colour){
+function arrow(x1, y1, x2, y2, colour, ballRadius){
+  //fixed arrow thickness and size
+  let arrowSize = ballRadius;
+
   //an arrow creating function, base at first set of coordinates, tip at second set of coordinates
   //arrow position is the first set of coordinates
   let arrowPosition = createVector(x1, y1);
   let arrowVector = createVector(x2-x1, y2-y1)
   //line portion of arrow, with base at 0,0
   //adjust length to ensure tip of arrow is at second set of coordinates
-  let arrowSize = arrowVector.mag()/3
-  let lineVector = arrowVector.copy().setMag(arrowVector.mag()-arrowSize)
+  //let arrowSize = arrowVector.mag()/3
+  let lineVector = arrowVector.copy().setMag(arrowVector.mag())
   //position of other end of line portion of arrow
   let arrowHeadBase = lineVector.copy().add(arrowPosition)
   
@@ -35,7 +38,7 @@ function arrow(x1, y1, x2, y2, colour){
   //make coords for rectangular section
   //top left corner of rectangle, from pov of base of arrow to arrowhead
   let topLeftCorner = arrowVector.copy();
-  topLeftCorner.setMag(arrowVector.mag()/12);
+  topLeftCorner.setMag(arrowSize/4);
   topLeftCorner.setHeading(arrowVector.heading()+PI/2);
   let topRightCorner = topLeftCorner.copy().mult(-1);
   let bottomLeftCorner = topLeftCorner.copy();
@@ -70,10 +73,10 @@ function displayVectors(array){
       let ball = array[i];
       let velocity = ball.position.copy()
             .sub(ball.prevPosition).mult(10).add(ball.position);
-      arrow(ball.position.x, ball.position.y, velocity.x, velocity.y, 'green');
-      let acceleration = ball.acceleration.copy().mult(10000);
+      arrow(ball.position.x, ball.position.y, velocity.x, velocity.y, 'green', ball.radius);
+      let acceleration = ball.saveAcceleration.copy().mult(ACCELERATION_SCALE);
       acceleration.add(ball.position)
-      arrow(ball.position.x, ball.position.y, acceleration.x, acceleration.y, 'red')
+      arrow(ball.position.x, ball.position.y, acceleration.x, acceleration.y, 'red', ball.radius)
     }
   }
 }

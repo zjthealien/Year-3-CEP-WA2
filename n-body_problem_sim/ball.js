@@ -4,9 +4,10 @@ class Ball{
     this.position = createVector(x, y);
     this.prevPosition = createVector(x, y); 
     this.acceleration = createVector(0, 0);
+    this.saveAcceleration = this.acceleration.copy()
     this.mass = mass;
     this.radius = sqrt(mass);
-    this.color = color(random(100,255), random(100,255),random(100,255));
+    this.color = color(round(random(50,200), 0), round(random(50,200), 0),round(random(50,200), 0));
     this.trail = [];
     this.name = name;
   }
@@ -24,6 +25,7 @@ class Ball{
     let tempPosition = this.position.copy();
     this.position.add(p5.Vector.add(velocity, p5.Vector.mult(this.acceleration, timeScale**2)));
     this.prevPosition = tempPosition;
+    this.saveAcceleration = this.acceleration.copy();
     this.acceleration.mult(0);
     this.trail.push(this.position.copy());
   }
@@ -32,17 +34,25 @@ class Ball{
   }
   
   ballDisplay() {
+    push();
     this.radius = constrain(sqrt(this.mass/PI), 0, 100000);
-    fill(this.color);
-    stroke(0);
-    strokeWeight(0.1);
-    if (zoom*this.radius<1){
-          ellipse(this.position.x, this.position.y, 1/zoom);
-
-    } else{
-          ellipse(this.position.x, this.position.y, this.radius * 2);
-
+    if (this == selectedBall&&menus.ballMenu.open){
+      let whiteOutlineSize = 4/zoom
+      fill(200)
+      noStroke()
+      ellipse(this.position.x, this.position.y, this.radius * 2 + whiteOutlineSize)
     }
+    fill(this.color);
+    stroke(255,0,0);
+    strokeWeight(0.1);
+    noStroke();
+    if (zoom*this.radius<1){
+      ellipse(this.position.x, this.position.y, 1/zoom);
+
+    }else{
+      ellipse(this.position.x, this.position.y, this.radius * 2);
+    }
+    pop();
   }
   trailDisplay(){
     for (let i = 0; i < this.trail.length-1; i++){

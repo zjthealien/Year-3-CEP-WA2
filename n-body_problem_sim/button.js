@@ -9,6 +9,7 @@ class Button{
         this.text = text;
         //stores function for displaying
         this.display;
+        this.clicked;
     }
     show(){
         this.open = true;
@@ -23,15 +24,18 @@ class Button{
             return true;
         }
     }
-    clicked(){
-        if(this.contains(mouseX, mouseY)&&mouseIsPressed){
-            this.action();
-        }
+    assignClicked(clicked){
+        this.clicked = () => {
+            if(this.open&&this.contains(mouseX, mouseY)){
+               clicked(this);
+            }
+        };
     }
     assignDisplay(displayFunction){
+        console.log(this)
         this.display = () => {
             if(this.open){
-               displayFunction();
+                displayFunction(this);
             }
         };
     } 

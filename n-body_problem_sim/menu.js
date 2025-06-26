@@ -25,6 +25,9 @@ class Menu{
     }
     for (let i = 0; i < this.buttons.length; i++){
       this.buttons[i].hide();
+      if (this.buttons[i].active){
+        this.buttons[i].active = false;
+      }
     }
   }
   assignDisplay(displayFunction){
