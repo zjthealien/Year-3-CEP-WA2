@@ -131,6 +131,13 @@ function setupBallMenu(){
 }
 
 function displayBallMenu() {
+  if (balls.includes(selectedBall)){
+    
+  } else{
+    menus.ballMenu.attemptClose();
+  }
+
+
   push();
   fill(30);
   rect((width / 4) * 3, -10, width / 4 + 10, (height / 8) * 7 + 10);
@@ -147,7 +154,7 @@ function displayBallMenu() {
   text(selectedBall.name, (width / 4) * 3 + 10, 10);
   textSize(segmentHeight);
   text(
-    "x: " + floor(selectedBall.position.x) + " y: " + floor(selectedBall.position.y)*-1,
+    "x: " + floor(selectedBall.position.x) + " y: " + (-floor(selectedBall.position.y)-1),
     (width / 4) * 3 + 10,
     height / 12 
   );
@@ -192,6 +199,7 @@ function displayBallMenu() {
   )
   pop();
   pop();
+  textSize(height/60)
 }
 
 function ballMenuExitDisplay(button){
@@ -205,6 +213,7 @@ function ballMenuExitDisplay(button){
 
 function toggleButtonDisplay(button, string){
   push();
+  stroke(200)
   let buttonColour = button.active ? 200 : 60
   fill(color(buttonColour));
   rect(button.x, button.y , button.w, button.h);
@@ -236,7 +245,6 @@ function clickButtonDisplay(button, string){
   rect(button.x, button.y , button.w, button.h);
   noStroke();
   textAlign(CENTER, CENTER);
-  textSize();
   let wordColour = button.contains(mouseX, mouseY) && mouseIsPressed ? 60 : 200
   fill(color(wordColour));
   text(string, button.x+button.w/2, button.y+button.h/2);
@@ -272,6 +280,7 @@ function deleteSelectedBallClicked(){
 function cameraFollowBallClicked(clickedButton){
   if (clickedButton.followingBall==true){
     clickedButton.followingBall = false;
+    cameraFollow = "FREEMOVEMENT"
   } else {
     clickedButton.followingBall = true;
   }

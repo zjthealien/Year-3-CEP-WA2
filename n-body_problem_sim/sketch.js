@@ -1,6 +1,6 @@
 //declare variable dump
-const BALLNUMBER = 300;
-const BALLMASS = 200;
+const BALLNUMBER = 100;
+let BALLMASS = 200;
 const INITIALVELOCITY = 100000;
 const GRAVITATIONAL_CONSTANT = 0.1;
 let SPIRAL_RADIUS_INCREMENT = 1; // Controls the spread of the spiral
@@ -15,7 +15,7 @@ let cameraOffset;
 let cameraFollow = "FREEMOVEMENT"; // two modes - 'FREEMOVEMENT', allows the player to move camera using wasd and 'CENTER OF GRAVITY', centers the screen on the center of gravity
 let centerOfGravity;
 let zoom = 0.7; //sets the scale of the coordinate system on the screen to create zoom in zoom out effect
-let paused = true;
+let paused = false;
 //menus object
 let menus = {};
 let seed;
@@ -24,20 +24,10 @@ let selectedBall;
 let selectedMenu;
 let verticalTranslate;
 
-function setup() {  
-  seed = round(random(1,1000));
-  //make the randomness based on the seed number
+function setupFunction(){
   randomSeed(seed);
-  print("Seed: " + seed);
-  let canvas = createCanvas(windowWidth, windowHeight);
-  //prevents context menu from appearing when right clicking (doesnt interfere with creating balls)
-  canvas.elt.oncontextmenu = () => false;
-  //
-  setupBallMenu();
-  menus.gameMenu = new Menu (0, 0, width, height, [], 1);
-  menus.gameMenu.open = true;
-  setupBarMenu();
-  sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
+  balls = []
+  let sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
   sun.color = color(255, 204, 0); // Yellow color for the sun
   balls.push(sun);
   // Create balls in a spiral pattern
@@ -78,9 +68,34 @@ function setup() {
   zoom = Math.min(availableWidth / dataWidth, availableHeight / dataHeight);
   cameraOffset = createVector(-centerX, -centerY);
   verticalTranslate = height/8*7/2;
+  cameraFollow = "FREEMOVEMENT"
+  timeMultiplier = 1
+}
+
+function setup() {  
+  seed = round(random(1,9999999999));
+  //make the randomness based on the seed number
+
+  print("Seed: " + seed);
+  let canvas = createCanvas(windowWidth, windowHeight);
+  //prevents context menu from appearing when right clicking (doesnt interfere with creating balls)
+  canvas.elt.oncontextmenu = () => false;
+  //
+  setupBallMenu();
+  menus.gameMenu = new Menu (0, 0, width, height, [], 1);
+  menus.gameMenu.open = true;
+  setupBarMenu();
+  setupFunction();
 }
 
 function draw() {
+  if (balls.includes(selectedBall)){
+
+  }else{
+    selectedBall = undefined;
+    menus.ballMenu.attemptClose()
+  }
+  //console.log(selectedBall)
   background(0);
   //print(zoom);
   if (mouseIsPressed && mouseY < (height / 8) * 7 && mouseButton == RIGHT&&selectedMenu == menus.gameMenu) {
@@ -131,37 +146,21 @@ function mousePressed(){
 
 function keyPressed() {
   if (keyCode == 67&&document.activeElement.tagName != 'INPUT') {
-    print('hi')
-    if (cameraFollow === "FREEMOVEMENT") {
-      if (cameraFollowBall.followingBall == false&&menus.ballMenu.open == true){
-        print('ho')
-        cameraFollowBall.followingBall=true
-      }else if (menus.ballMenu.open == false){
-        print('hee')
-        cameraFollow = "CENTEROFGRAVITY";
+    if(menus.ballMenu.open){
+      cameraFollowBall.followingBall = cameraFollowBall.followingBall == true ? false : true
+    }else{
+      if (cameraFollowBall.followingBall){
+        cameraFollowBall.followingBall = false
+      }else{
+        cameraFollow = cameraFollow == "FREEMOVEMENT" ? "CENTEROFGRAVITY" : "FREEMOVEMENT"
       }
-  console.log(cameraFollow) 
-    } else{
-      print('oh')
-      cameraFollow = "FREEMOVEMENT";
-      cameraFollowBall.followingBall = false
     }
-  }
+    if (cameraFollowBall.followingBall == false){
+      cameraFollow = "FREEMOVEMENT"
+    }
 
-  if (
-    key == "0" ||
-    key == "1" ||
-    key == "2" ||
-    key == "3" ||
-    key == "4" ||
-    key == "5" ||
-    key == "6" ||
-    key == "7" ||
-    key == "8" ||
-    key == "9"
-  ) {
-   // timeMultiplier = (Number(key) * 3) ** 2;
   }
+  
   if (keyCode == 32&&document.activeElement.tagName != 'INPUT') {
     if (paused){
       paused = false;
@@ -172,7 +171,7 @@ function keyPressed() {
 }
 
 function mouseWheel(event) {
-  console.log(zoom)
+  //console.log(zoom)
   let baseFactor = keyIsDown(16) ? 0.001 : 0.0001;
   // Get mouse position in world space BEFORE zoom change
   let mouseWorld = mouseToWorld();
@@ -265,6 +264,10 @@ function setCameraSettings() {
   }
   if (cameraFollowBall.followingBall){
     cameraFollow = balls[balls.indexOf(selectedBall)]
+  } 
+  if (cameraFollowBall.followingBall&&selectedBall==undefined){
+    cameraFollow = "FREEMOVEMENT"
+    cameraFollowBall.followingBall = false
   }
   if (cameraFollow instanceof Ball){
     cameraOffset.x = -cameraFollow.position.x;
@@ -286,6 +289,24 @@ function displayCenterOfMassMarker() {
 function displayUserInterface() {
   // UI AREA
   push();
+    //show what camera is following
+  textSize(height/45);
+  fill(200)
+  noStroke()
+  let cameraFollowText;
+  if (cameraFollow instanceof Ball){
+    cameraFollowText = cameraFollow.name;
+  } else {
+    cameraFollowText = cameraFollow == "FREEMOVEMENT" ? "Free Movement" : "Center of Mass"
+  }
+  //console.log(cameraFollow)
+  textAlign(RIGHT, BOTTOM)
+  text("Camera Following: " + cameraFollowText, width, height/8*7);
+  textAlign(LEFT, TOP)
+
+  //shows what the center of the camera is looking at
+  text("x: " + floor(mouseToWorld().x) + ", y: " + -floor(mouseToWorld().y), 0, 0)
+
   fill(30);
   stroke(255);
   strokeWeight(1);
@@ -293,11 +314,6 @@ function displayUserInterface() {
     verticalTranslate = height/8*7/2
   } else if (menus.barMenu.open == false){
     verticalTranslate = height/2
-  }
-  if (selectedBall){
-    
-  } else{
-    menus.ballMenu.attemptClose();
   }
   let menuItems = []
   for (let i in menus){
@@ -330,6 +346,8 @@ function displayUserInterface() {
       }
     }
   }
+
+
   pop();
 }
 
@@ -360,16 +378,21 @@ function ballToMouse(buffer) {
 }
 
 function findCenterOfGravity() {
-  let totalXOfBalls = 0;
-  let totalYOfBalls = 0;
-  let totalBALLMASS = 0;
-  for (let ball of balls) {
-    totalXOfBalls += ball.position.x * ball.mass;
-    totalYOfBalls += ball.position.y * ball.mass;
-    totalBALLMASS += ball.mass;
+  if (balls.length>0){
+    let totalXOfBalls = 0;
+    let totalYOfBalls = 0;
+    let totalBALLMASS = 0;
+    for (let ball of balls) {
+      totalXOfBalls += ball.position.x * ball.mass;
+      totalYOfBalls += ball.position.y * ball.mass;
+      totalBALLMASS += ball.mass;
+    }
+    centerOfGravity.x = totalXOfBalls / totalBALLMASS;
+    centerOfGravity.y = totalYOfBalls / totalBALLMASS;
+  } else{
+    centerOfGravity.x = 0 
+    centerOfGravity.y = 0
   }
-  centerOfGravity.x = totalXOfBalls / totalBALLMASS;
-  centerOfGravity.y = totalYOfBalls / totalBALLMASS;
 }
 
 function randomName(length = random(4, 8)) {
