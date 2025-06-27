@@ -114,16 +114,20 @@ function setupBallMenu(){
   //when press enter and the input is selected, change the x position to what is in the input
   changeXPositionInput.elt.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
+    let velocity = selectedBall.position.copy().sub(selectedBall.prevPosition);
     //sets balls position to value of input or 0 if nothing is entered
     selectedBall.position.x = float(changeXPositionInput.value()) ? float(changeXPositionInput.value()) : 0;
+      selectedBall.prevPosition = selectedBall.position.copy().sub(velocity);
   }
 });
   menus.ballMenu.buttons.push(changeXPositionInput);
   //when press enter and the input is selected, change the y position to what is in the input
   changeYPositionInput.elt.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
+    let velocity = selectedBall.position.copy().sub(selectedBall.prevPosition);
     //sets balls position to value of input or 0 if nothing is entered
     selectedBall.position.y = float(changeYPositionInput.value()) ? float(changeYPositionInput.value()) : 0;
+    selectedBall.prevPosition = selectedBall.position.copy().sub(velocity);
   }
 });
   menus.ballMenu.buttons.push(changeYPositionInput);
