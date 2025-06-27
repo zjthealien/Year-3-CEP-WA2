@@ -130,6 +130,7 @@ function displayBarMenu(){
     //shows how big the ball is when you spawn it.
     text("Mass of spawned Ball: " + BALLMASS, width/2+width/64,height/8*7+5)
     text("Change spawned Ball mass: ", width/2+width/64, height/8*7+5+width/80)
+    text("Ball Count: "+ balls.length, width/2+width/64, height-5-width/80)
     pop()
     textSize(width/80)
 }
