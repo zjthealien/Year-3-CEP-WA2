@@ -32,7 +32,7 @@ class Button{
         };
     }
     assignDisplay(displayFunction){
-        console.log(this)
+        //console.log(this)
         this.display = () => {
             if(this.open){
                 displayFunction(this);

@@ -25,6 +25,7 @@ let selectedMenu;
 let verticalTranslate;
 
 function setupFunction(){
+  
   randomSeed(seed);
   balls = []
   let sun = new Ball(0, 0, SUNMASS, "Sol-" + seed);
@@ -73,6 +74,7 @@ function setupFunction(){
 }
 
 function setup() {  
+  console.log(tutorialPanels)
   seed = round(random(1,9999999999));
   //make the randomness based on the seed number
 
@@ -86,6 +88,8 @@ function setup() {
   menus.gameMenu.open = true;
   setupBarMenu();
   setupFunction();
+  setupTutorialMenu()
+
 }
 
 function draw() {
@@ -98,10 +102,7 @@ function draw() {
   //console.log(selectedBall)
   background(0);
   //print(zoom);
-  if (mouseIsPressed && mouseY < (height / 8) * 7 && mouseButton == RIGHT&&selectedMenu == menus.gameMenu) {
-    spawnBallOnLocation(mouseToWorld());
-  }
-  if (!paused){
+  if (!paused&&menus.gameMenu.open){
     for (let times = 0; times < timeMultiplier; times++) {
       physicsUpdate();
     }
@@ -128,13 +129,11 @@ function draw() {
 }
 
 function mousePressed(){
-  for (let button of selectedMenu.buttons){
-    if (button instanceof Button){
-      if (button.clicked){
-        button.clicked();
-      }
-    }
+  if (menus.gameMenu.open){
+  if (mouseButton == RIGHT&&selectedMenu == menus.gameMenu) {
+    spawnBallOnLocation(mouseToWorld());
   }
+
   if (mouseButton == LEFT && selectedMenu == menus.gameMenu) {
     let ball = ballToMouse(10)
     selectedBall = ball ? ball : selectedBall;
@@ -143,9 +142,17 @@ function mousePressed(){
     }
   }
 }
+  for (let button of selectedMenu.buttons){
+    if (button instanceof Button){
+      if (button.clicked){
+        button.clicked();
+      }
+    }
+  }
+}
 
 function keyPressed() {
-  if (keyCode == 67&&document.activeElement.tagName != 'INPUT') {
+  if (keyCode == 67&&document.activeElement.tagName != 'INPUT'&&menus.gameMenu.open) {
     if(menus.ballMenu.open){
       cameraFollowBall.followingBall = cameraFollowBall.followingBall == true ? false : true
     }else{
@@ -161,7 +168,7 @@ function keyPressed() {
 
   }
   
-  if (keyCode == 32&&document.activeElement.tagName != 'INPUT') {
+  if (keyCode == 32&&document.activeElement.tagName != 'INPUT'&&menus.gameMenu.open) {
     if (paused){
       paused = false;
     }else{
@@ -171,6 +178,7 @@ function keyPressed() {
 }
 
 function mouseWheel(event) {
+  if (menus.gameMenu.open){
   //console.log(zoom)
   let baseFactor = keyIsDown(16) ? 0.001 : 0.0001;
   // Get mouse position in world space BEFORE zoom change
@@ -182,6 +190,7 @@ function mouseWheel(event) {
   let newMouseWorld = mouseToWorld();
   // Offset camera so zoom centers on mouse
   cameraOffset.add(newMouseWorld.sub(mouseWorld));
+  }
 }
 
 //custom functions
@@ -320,20 +329,15 @@ function displayUserInterface() {
     let menu = menus[i];
     menuItems.push(menu)
   }
-  for (let i = 0; i < menuItems.length; i++){
-    let menu = menuItems[i] 
-    //print(menu)
-    let lowestPriority = 1000;
-    let displayMenu;
-    for (let f = 0; f < menuItems.length; f++){
-      if (menu.priority <= lowestPriority){
-        lowestPriority = menu.priority;
-        displayMenu = menu;
-      } 
-    }
-    if (displayMenu.display){
-      displayMenu.display()
-    }
+
+  let sortedMenus = Object.values(menus).sort((a, b) => a.priority - b.priority);
+
+    // Loop and display each menu in order of increasing priority
+    for (let menu of sortedMenus) {
+      if (menu.display) {
+          menu.display();
+      }
+    
     for (let g = 0; g < menu.buttons.length; g++){
       let button = menu.buttons[g];
       if (button instanceof Button){

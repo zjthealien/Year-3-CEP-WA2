@@ -1,7 +1,5 @@
 const ACCELERATION_SCALE = 250 ;
-
-let setting = {};
-setting.showVector = true;
+let showVector = false;
 
 
 function arrow(x1, y1, x2, y2, colour, ballRadius){
@@ -68,7 +66,7 @@ function arrow(x1, y1, x2, y2, colour, ballRadius){
   pop();
 }
 function displayVectors(array){
-  if (setting.showVector == true){
+  if (showVector == true){
     for (let i = 0; i < array.length; i++){
       let ball = array[i];
       let velocity = ball.position.copy()

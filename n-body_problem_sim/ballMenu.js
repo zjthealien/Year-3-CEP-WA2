@@ -111,7 +111,7 @@ function setupBallMenu(){
   menus.ballMenu.buttons.push(changeYPositionInput);
   changeMassInput.elt.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
-    selectedBall.mass = float(changeMassInput.value());
+    selectedBall.mass = constrain(float(changeMassInput.value()), 1, 1000000000);
   }
 });
   menus.ballMenu.buttons.push(changeMassInput);

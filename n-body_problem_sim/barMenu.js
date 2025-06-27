@@ -9,6 +9,8 @@ let seedInput;
 let clearAllBallsButton;
 let spawnMassInput;
 let sunMassInput;
+let openTutorialMenu;
+let toggleVectors;
 
 function setupBarMenu(){
     menus.barMenu = new Menu(-10, (height / 8) * 7, width + 20, height / 8 + 10, 3);
@@ -48,6 +50,19 @@ function setupBarMenu(){
     clearAllBallsButton.assignDisplay((button)=>{(clickButtonDisplay(button, "Clear ALL Balls"))})
     clearAllBallsButton.assignClicked(()=>{balls = []})
     menus.barMenu.buttons.push(clearAllBallsButton)
+    toggleVectors = new Button(width/4*3, height/8*7, width/8, height/16)
+    toggleVectors.assignDisplay((button)=>{toggleVectorsDisplay(button, "Show Vectors")})
+    toggleVectors.assignClicked(()=>{
+        showVector = showVector == false ? true : false
+    })
+    menus.barMenu.buttons.push(toggleVectors)
+
+    openTutorialMenu = new Button(width/8*7, height-height/32, width/8, height/32)
+    openTutorialMenu.assignDisplay((button)=>{clickButtonDisplay(button, "Show Tutorial")})
+    openTutorialMenu.assignClicked(()=>{menus.tutorialMenu.attemptOpen()})
+    menus.barMenu.buttons.push(openTutorialMenu)
+
+
     seedInput = createInput();
     seedInput.attribute('type', 'number');
     spawnMassInput = createInput()
@@ -56,6 +71,7 @@ function setupBarMenu(){
     seedInput.position(width/4+width/32, height/30*29)
     seedInput.size(width/2-width/4-width/32, height/40)
     spawnMassInput.position(width/2+width/64, height/8*7+5+width/80*2)
+    spawnMassInput.size(width/8+width/32, height/40)
     pop()
     seedInput.elt.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -64,11 +80,13 @@ function setupBarMenu(){
             setupFunction()
         }
     })
+    menus.barMenu.buttons.push(seedInput)
     spawnMassInput.elt.addEventListener('keydown', (event) => {
         if(event.key === 'Enter'){
-            BALLMASS = floor(spawnMassInput.value())
+            BALLMASS = constrain(floor(spawnMassInput.value()),1, 1000000000)
         }
     })
+    menus.barMenu.buttons.push(spawnMassInput)
 }
 function displayBarMenu(){
     push()
@@ -124,13 +142,28 @@ function pauseStartButtonDisplay(button){
         fill(230, 0, 0)
         rect(button.x, button.y, button.w, button.h)
         fill(150, 0, 0)
-        triangle(button.x + button.w/3-button.w/8, button.y+button.h/6, button.x + button.w/3-button.w/8, button.y+button.h/6*5, button.x + button.w/3*2-button.w/8+button.w/4, button.y+button.h/2)
+        rect(button.x + button.w/3-button.w/8, button.y + button.h/6, button.w/4, button.h/6*4)
+        rect(button.x + button.w/3*2-button.w/8, button.y + button.h/6, button.w/4, button.h/6*4)
     }else{
         fill(0, 230, 0)
         rect(button.x, button.y, button.w, button.h)
         fill(0, 150, 0)
-        rect(button.x + button.w/3-button.w/8, button.y + button.h/6, button.w/4, button.h/6*4)
-        rect(button.x + button.w/3*2-button.w/8, button.y + button.h/6, button.w/4, button.h/6*4)
+        triangle(button.x + button.w/3-button.w/8, button.y+button.h/6, button.x + button.w/3-button.w/8, button.y+button.h/6*5, button.x + button.w/3*2-button.w/8+button.w/4, button.y+button.h/2)
     }
     pop()
+}
+
+function toggleVectorsDisplay(button, string){
+  push();
+  stroke(200)
+  let buttonColour = showVector ? 200 : 60
+  fill(color(buttonColour));
+  rect(button.x, button.y , button.w, button.h);
+  noStroke();
+  textAlign(CENTER, CENTER);
+  textSize();
+  let wordColour = showVector ? 60 : 200
+  fill(color(wordColour));
+  text(string, button.x+button.w/2, button.y+button.h/2);
+  pop();
 }
