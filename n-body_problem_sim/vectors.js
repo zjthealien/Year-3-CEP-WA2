@@ -53,7 +53,6 @@ function arrow(x1, y1, x2, y2, colour, ballRadius){
   //display arrow
   push();
   let c = color(colour);
-  //print(c)
   c.setAlpha(100);
   strokeWeight(0);
   stroke(c)
@@ -69,10 +68,15 @@ function displayVectors(array){
   if (showVector == true){
     for (let i = 0; i < array.length; i++){
       let ball = array[i];
+      //gets velocity based on balls position and position in previous frame(multiplies by 10 to make it visible)
       let velocity = ball.position.copy()
-            .sub(ball.prevPosition).mult(10).add(ball.position);
+            .sub(ball.prevPosition).mult(10)
+            //moves the tip of the arrow to be relative to the ball position
+            .add(ball.position);
       arrow(ball.position.x, ball.position.y, velocity.x, velocity.y, 'green', ball.radius);
+      //acceleration is multiplied to make it visible
       let acceleration = ball.saveAcceleration.copy().mult(ACCELERATION_SCALE);
+      //moves the tip of the arrow to be relative to the ball position
       acceleration.add(ball.position)
       arrow(ball.position.x, ball.position.y, acceleration.x, acceleration.y, 'red', ball.radius)
     }

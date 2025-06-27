@@ -1,3 +1,4 @@
+//a custom button object for better interactions and displaying
 class Button{
     constructor(x, y, w, h, text = ''){
         this.x = x;
@@ -5,9 +6,9 @@ class Button{
         this.w = w;
         this.h = h;
         this.open = true;
+        
+        //stores functions
         this.action;
-        this.text = text;
-        //stores function for displaying
         this.display;
         this.clicked;
     }
@@ -18,6 +19,7 @@ class Button{
         this.open = false;
     }
     contains(otherX, otherY){
+        //detects if coordinates are within button
         if (this.x < otherX && otherX < this.x + this.w &&
             this.y < otherY && otherY < this.y + this.h
         ){
@@ -25,6 +27,7 @@ class Button{
         }
     }
     assignClicked(clicked){
+        //runs this function if button is clicked 
         this.clicked = () => {
             if(this.open&&this.contains(mouseX, mouseY)){
                clicked(this);
@@ -32,7 +35,7 @@ class Button{
         };
     }
     assignDisplay(displayFunction){
-        //console.log(this)
+        //runs this every frame
         this.display = () => {
             if(this.open){
                 displayFunction(this);
@@ -40,6 +43,7 @@ class Button{
         };
     } 
     assignAction(action){
+        //runs every frame as well, for the actions of the button
         this.action = () => {
             if(this.open){
                action();
